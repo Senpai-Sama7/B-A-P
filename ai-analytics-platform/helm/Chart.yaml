@@ -1,6 +1,0 @@
-apiVersion: v2
-name: ai-analytics
-description: Helm chart for AI-Analytics Platform starter
-type: application
-version: 0.1.0
-appVersion: "0.1.0"
