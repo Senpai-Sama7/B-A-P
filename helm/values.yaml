@@ -1,0 +1,15 @@
+image:
+  repository: your-docker-org/ai-analytics
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+service:
+  type: ClusterIP
+  port: 80
+
+env:
+  OPENAI_API_KEY: "replace-me"
+  DATABASE_URL: "postgresql+asyncpg://analytics:analytics@db/analytics"
+  REDIS_URL: "redis://redis:6379"
