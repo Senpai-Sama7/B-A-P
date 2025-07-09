@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="assets/logo.png" alt="JobFit AI" width="300"/>
+  <img src="assets/logo.png" alt="B-A-P" width="300"/>
 </p>
 
 ---
