@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+.idea
+.vscode
+dist
+build
+tests/__data__

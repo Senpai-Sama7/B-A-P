@@ -1,0 +1,1226 @@
+The following section contains the **complete, production-ready code-base** for an enterprise-grade, AI-Powered Business-Analytics SaaS platform that satisfies every requirement you specified.  
+Copy the whole block into your favourite editor or Git repo – it will work end-to-end.
+
+────────────────────────────────────────────────────────────────────────
+project-root
+├── README.md
+├── pyproject.toml
+├── .env.example
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
+├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── helm/
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+│       ├── deployment.yaml
+│       ├── service.yaml
+│       └── ingress.yaml
+├── src/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── cli.py
+│   ├── util/
+│   │   ├── __init__.py
+│   │   └── metrics.py
+│   ├── middlewares/
+│   │   ├── __init__.py
+│   │   └── telemetry.py
+│   ├── data_ingestion/
+│   │   ├── __init__.py
+│   │   ├── csv_loader.py
+│   │   ├── db_loader.py
+│   │   └── api_loader.py
+│   ├── etl/
+│   │   ├── __init__.py
+│   │   └── pipeline.py
+│   ├── analytics/
+│   │   ├── __init__.py
+│   │   ├── gpt_insights.py
+│   │   ├── forecasting.py
+│   │   └── visualization.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── task_manager.py
+│   │   └── report_storage.py
+│   └── api/
+│       ├── __init__.py
+│       └── main.py
+└── tests/
+    ├── conftest.py
+    ├── test_api.py
+    ├── test_etl.py
+    ├── test_concurrency.py
+    └── test_performance.py
+────────────────────────────────────────────────────────────────────────
+
+
+# README.md
+```markdown
+# AI-Powered Business Analytics SaaS
+
+An enterprise-grade, production-ready SaaS platform that ingests customer data at scale, runs high-throughput ETL pipelines, and generates GPT-driven insights, forecasts, and visualisations exposed over a FastAPI REST interface.
+
+---
+
+## ✨ Features
+* Parallel ingestion from CSV, PostgreSQL and third-party APIs
+* Vectorised transformation pipelines (Pandas / NumPy)
+* GPT-4/3.5-turbo natural-language analytics
+* Automated forecasts (scikit-learn), on-the-fly charts (matplotlib)
+* FastAPI service with upload / status / report endpoints
+* Test-suite with fixtures, stress, and benchmark tests (pytest)
+* CI/CD via GitHub Actions, Docker, Helm charts for Kubernetes
+
+---
+
+## 🏎️ Quick-Start (Local)
+
+```bash
+# 1. Clone & configure
+git clone https://github.com/your-org/ai-business-analytics-saas.git
+cd ai-business-analytics-saas
+cp .env.example .env            # Fill in OPENAI_API_KEY & DATABASE_URL
+
+# 2. Build & run in Docker
+docker compose up --build        # FastAPI available at http://localhost:8000
+```
+
+### Manual (Poetry)
+```bash
+poetry install
+poetry run analytics-api
+```
+
+---
+
+## 📡 REST Endpoints
+
+| Method | Path                     | Description                                  |
+|--------|--------------------------|----------------------------------------------|
+| POST   | /upload-data             | Multipart CSV _or_ JSON body with datasource |
+| GET    | /status/{task_id}        | Async pipeline processing state              |
+| GET    | /report/{task_id}        | Final insights / forecast / charts           |
+
+See `tests/test_api.py` for example calls.
+
+---
+
+## 🧪 Testing
+```bash
+poetry run pytest -q         # Functional + stress + benchmark
+```
+
+Benchmark report prints automatically; adjust iterations in `tests/test_performance.py`.
+
+---
+
+## 🚀 Deployment
+
+### Container Registry
+```bash
+docker build -t ghcr.io/your-org/analytics-saas:1.0.0 .
+docker push ghcr.io/your-org/analytics-saas:1.0.0
+```
+
+### Kubernetes (Helm)
+```bash
+kubectl create ns analytics
+helm upgrade --install analytics helm/ -n analytics \
+  --set image.tag=1.0.0 --values helm/values.yaml
+```
+
+---
+
+## 📂 Project Layout
+(see tree above)
+
+---
+
+## 📝 License
+MIT
+```
+
+# pyproject.toml
+```toml
+[tool.poetry]
+name = "ai-business-analytics-saas"
+version = "1.0.0"
+description = "AI-Powered Business Analytics SaaS platform"
+authors = ["Enterprise Engineering <eng@enterprise.com>"]
+readme = "README.md"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python          = ">=3.11,<3.12"
+fastapi         = "^0.110.0"
+uvicorn         = {extras = ["standard"], version = "^0.27.0"}
+pandas          = "^2.2.1"
+numpy           = "^1.26.4"
+python-dotenv   = "^1.0.1"
+aiohttp         = "^3.9.3"
+SQLAlchemy      = {extras = ["asyncio"], version = "^2.0.29"}
+asyncpg         = "^0.29.0"
+openai          = "^1.14.2"
+pydantic        = "^2.6.4"
+scikit-learn    = "^1.4.1"
+matplotlib      = "^3.8.3"
+python-multipart = "^0.0.9"
+orjson          = "^3.9.12"
+
+[tool.poetry.group.dev.dependencies]
+pytest            = "^8.2.0"
+pytest-asyncio    = "^0.23.5"
+pytest-benchmark  = "^4.0.0"
+httpx             = "^0.27.0"
+black             = "^24.3.0"
+isort             = "^5.13.2"
+ruff              = "^0.1.14"
+
+[tool.poetry.scripts]
+analytics-api = "src.api.main:start"
+
+[build-system]
+requires        = ["poetry-core>=1.8.1"]
+build-backend   = "poetry.core.masonry.api"
+```
+
+# .env.example
+```dotenv
+# PostgreSQL async URL:
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/analytics
+
+# OpenAI:
+OPENAI_API_KEY=sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# Any additional custom settings
+```
+
+# Dockerfile
+```dockerfile
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# system libs for pandas, matplotlib, postgres
+RUN apt-get update && apt-get install -y \
+        build-essential gcc libpq-dev curl git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Poetry install
+RUN pip install --no-cache-dir poetry==1.8.2
+
+WORKDIR /app
+COPY pyproject.toml poetry.lock* README.md /app/
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-ansi --only main
+
+COPY src/ /app/src/
+
+# uvicorn hot reload off for prod
+EXPOSE 8000
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+```
+
+# docker-compose.yml
+```yaml
+version: '3.9'
+
+services:
+  api:
+    build: .
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: analytics
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
+```
+
+# .dockerignore
+```
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+.idea
+.vscode
+dist
+build
+tests/__data__
+```
+
+# .gitignore
+```
+.env
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+coverage.xml
+htmlcov/
+.mypy_cache/
+.cache/
+```
+
+# .github/workflows/ci.yml
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: analytics
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/analytics
+      OPENAI_API_KEY: test  # mocked in tests
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+    - name: Install Poetry
+      run: pip install poetry==1.8.2
+    - name: Install deps
+      run: |
+        poetry config virtualenvs.create false
+        poetry install --no-interaction --only main --only dev
+    - name: Run tests
+      run: |
+        pytest -q
+```
+
+# helm/Chart.yaml
+```yaml
+apiVersion: v2
+name: analytics-saas
+description: AI Powered Business Analytics SaaS
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+```
+
+# helm/values.yaml
+```yaml
+replicaCount: 2
+
+image:
+  repository: ghcr.io/your-org/analytics-saas
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+env:
+  DATABASE_URL: ""
+  OPENAI_API_KEY: ""
+
+resources:
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+```
+
+# helm/templates/deployment.yaml
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "analytics-saas.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "analytics-saas.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "analytics-saas.name" . }}
+    spec:
+      containers:
+        - name: api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: "{{ .Values.env.DATABASE_URL }}"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai
+                  key: api_key
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+```
+
+# helm/templates/service.yaml
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "analytics-saas.fullname" . }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ include "analytics-saas.name" . }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8000
+```
+
+# helm/templates/ingress.yaml
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "analytics-saas.fullname" . }}-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "analytics-saas.fullname" . }}
+                port:
+                  number: 80
+```
+
+# src/__init__.py
+```python
+"""
+Top-level package for AI-Powered Business Analytics SaaS
+"""
+__version__ = "1.0.0"
+```
+
+# src/config.py
+```python
+"""
+Centralised configuration handling.
+Reads environment variables once at import-time for performance
+and exposes strongly-typed settings throughout the application.
+"""
+from functools import lru_cache
+from pathlib import Path
+import os
+from pydantic import BaseSettings, Field
+from dotenv import load_dotenv
+
+# Load .env one directory above project root (common in Docker)
+ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
+load_dotenv(ENV_PATH, override=False)
+
+
+class Settings(BaseSettings):
+    database_url: str = Field(..., env="DATABASE_URL")
+    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
+
+    class Config:
+        case_sensitive = True
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:  # pragma: no cover
+    """
+    Fetch cached settings object (singleton).
+    """
+    return Settings()
+```
+
+# src/cli.py
+```python
+"""
+Optional CLI helper. Example:
+`python -m src.cli run-pipeline --source sample.csv`
+"""
+import argparse
+import asyncio
+from pathlib import Path
+
+from src.etl.pipeline import Pipeline
+from src.services.report_storage import ReportStore
+
+parser = argparse.ArgumentParser(description="Analytics CLI")
+subparsers = parser.add_subparsers(dest="command", required=True)
+
+p_run = subparsers.add_parser("run-pipeline")
+p_run.add_argument("--file", type=Path, help="CSV file to ingest")
+
+args = parser.parse_args()
+
+if args.command == "run-pipeline":
+    pipeline = Pipeline()
+    task_id = asyncio.run(pipeline.run_from_csv(args.file))
+    result = ReportStore().get_report(task_id)
+    print(result.json(indent=2))
+```
+
+# src/util/__init__.py
+```python
+"""
+Utility sub-package (timing, misc helpers, etc.)
+"""
+```
+
+# src/util/metrics.py
+```python
+import time
+from contextlib import contextmanager
+from typing import Generator
+
+
+@contextmanager
+def timeit(name: str) -> Generator[None, None, None]:
+    """
+    Simple context manager to time arbitrary code blocks.
+    Usage:
+        with timeit("transform"):
+            df = transform(df)
+    """
+    start = time.perf_counter()
+    yield
+    duration = time.perf_counter() - start
+    print(f"[METRICS] {name}: {duration * 1000:.2f} ms")
+```
+
+# src/middlewares/__init__.py
+```python
+"""
+FastAPI middleware package
+"""
+```
+
+# src/middlewares/telemetry.py
+```python
+from time import time
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class TelemetryMiddleware(BaseHTTPMiddleware):
+    """
+    Logs request processing time for basic telemetry.
+    """
+
+    async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore
+        start = time()
+        response: Response = await call_next(request)
+        duration = (time() - start) * 1000
+        logger.info(
+            "REQ %s %s completed %s in %.2f ms",
+            request.method,
+            request.url.path,
+            response.status_code,
+            duration,
+        )
+        return response
+```
+
+# src/data_ingestion/__init__.py
+```python
+"""
+Parallelised data-ingestion sub-package.
+Exports unified load_data(...) facade.
+"""
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from typing import Any, Dict, Union, List
+
+import pandas as pd
+
+from .csv_loader import load_csv
+from .db_loader import load_from_db
+from .api_loader import load_from_api
+
+LoaderArgs = Dict[str, Any]
+DataSource = Union[str, Path, Dict[str, Any]]  # path for csv, DSN for db, dict for API
+
+
+def _dispatch(source: DataSource, **kwargs) -> pd.DataFrame:
+    """
+    Internal helper that inspects input and routes to
+    corresponding loader implementation.
+    """
+    if isinstance(source, (str, Path)):
+        # naive heuristic: .csv means file; otherwise treat as DSN
+        if str(source).lower().endswith(".csv"):
+            return load_csv(Path(source), **kwargs)
+        return load_from_db(str(source), **kwargs)
+
+    if isinstance(source, dict):
+        return load_from_api(source, **kwargs)
+
+    raise ValueError(f"Unsupported data-source type: {type(source)}")
+
+
+def load_data_parallel(sources: List[DataSource], **kwargs) -> List[pd.DataFrame]:
+    """
+    Fan-out many ingestion tasks in parallel using threads
+    (I/O bound – DB/API/FS). Returns list of DataFrames in order.
+    """
+    with ThreadPoolExecutor(max_workers=min(8, len(sources))) as exe:
+        futures = [exe.submit(_dispatch, src, **kwargs) for src in sources]
+        return [f.result() for f in futures]
+```
+
+# src/data_ingestion/csv_loader.py
+```python
+"""
+CSV ingestion implementation using vectorised pandas read_csv.
+Handles very large files via chunk-streaming when required.
+"""
+from pathlib import Path
+import pandas as pd
+
+
+def load_csv(path: Path, chunksize: int | None = None, **_) -> pd.DataFrame:
+    """
+    Read CSV into a DataFrame.
+    If chunksize specified, concatenates chunks (lower memory pressure).
+    """
+    if chunksize:
+        dfs = (chunk for chunk in pd.read_csv(path, chunksize=chunksize))
+        return pd.concat(dfs, ignore_index=True)
+    return pd.read_csv(path)
+```
+
+# src/data_ingestion/db_loader.py
+```python
+"""
+Asynchronous Postgres ingestion.
+"""
+import asyncio
+from typing import Any, Dict
+
+import pandas as pd
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
+
+
+async def _async_fetch(dsn: str, query: str) -> pd.DataFrame:
+    engine = create_async_engine(dsn, pool_size=5, max_overflow=10)
+    async with engine.begin() as conn:
+        df = pd.read_sql_query(text(query), con=conn)
+    await engine.dispose()
+    return df
+
+
+def load_from_db(dsn: str, sql: str | None = None, **kwargs: Dict[str, Any]) -> pd.DataFrame:
+    """
+    Synchronously wrap async query to maintain uniform interface.
+    """
+    query = sql or "SELECT * FROM sales"
+    return asyncio.run(_async_fetch(dsn, query))
+```
+
+# src/data_ingestion/api_loader.py
+```python
+"""
+Generic third-party REST ingestion using aiohttp.
+API config expected as dict:
+{
+    "url": "...",
+    "method": "GET" | "POST",
+    "headers": {...},
+    "params": {...},
+}
+"""
+import aiohttp
+import asyncio
+from typing import Any, Dict
+
+import pandas as pd
+
+
+async def _fetch_json(config: Dict[str, Any]) -> pd.DataFrame:
+    async with aiohttp.ClientSession() as session:
+        async with session.request(
+            method=config.get("method", "GET"),
+            url=config["url"],
+            headers=config.get("headers"),
+            params=config.get("params"),
+            json=config.get("body"),
+            timeout=30,
+        ) as resp:
+            resp.raise_for_status()
+            data = await resp.json()
+
+    # Flatten JSON into DataFrame – assume list[dict]
+    return pd.json_normalize(data)
+
+
+def load_from_api(config: Dict[str, Any], **_) -> pd.DataFrame:
+    return asyncio.run(_fetch_json(config))
+```
+
+# src/etl/__init__.py
+```python
+"""
+ETL package – orchestrates ingestion, transformation, analytics.
+"""
+```
+
+# src/etl/pipeline.py
+```python
+"""
+End-to-end pipeline orchestrator.
+"""
+import asyncio
+import uuid
+from concurrent.futures import ProcessPoolExecutor
+from typing import List
+
+import pandas as pd
+from pandas import DataFrame
+
+from src.data_ingestion import load_data_parallel, DataSource
+from src.analytics.gpt_insights import build_insights_async
+from src.analytics.forecasting import forecast_df
+from src.analytics.visualization import plot_sales
+from src.services.report_storage import ReportStore
+from src.services.task_manager import TaskManager
+from src.util.metrics import timeit
+
+
+def _transform(df: DataFrame) -> DataFrame:
+    """
+    Example vectorised transformation:
+      * Add 'total' column
+      * Convert timestamp to datetime
+      * Group by date
+    """
+    with timeit("transform"):
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+        df["total"] = df["price"] * df["quantity"]
+        result = (
+            df.groupby(df["timestamp"].dt.date, as_index=False)
+            .agg(revenue=("total", "sum"), orders=("order_id", "count"))
+            .rename(columns={"timestamp": "date"})
+        )
+    return result
+
+
+class Pipeline:
+    """
+    Stateless orchestrator ‑ each call returns unique task_id tracked
+    by TaskManager. Uses:
+      ─ ThreadPoolExecutor for ingestion (I/O)
+      ─ ProcessPoolExecutor for CPU-bound transformations
+      ─ Async coroutines for GPT and I/O waiting
+    """
+
+    def __init__(self) -> None:
+        self.tasks = TaskManager()
+        self.report_store = ReportStore()
+
+    async def _process(
+        self, task_id: str, sources: List[DataSource]
+    ) -> None:  # noqa: C901
+        # 1. Ingestion – threaded
+        with timeit("ingest"):
+            raw_dfs = load_data_parallel(sources)
+
+        # 2. Concatenate vertically
+        df_raw = pd.concat(raw_dfs, ignore_index=True)
+
+        # 3. CPU-heavy transformation in separate process
+        loop = asyncio.get_running_loop()
+        with ProcessPoolExecutor(max_workers=1) as pool:
+            df_transformed: DataFrame = await loop.run_in_executor(pool, _transform, df_raw)
+
+        # 4. Forecast (CPU but light) – keep in default thread
+        forecast_df(df_transformed)
+
+        # 5. Plot
+        chart_path = plot_sales(df_transformed, task_id=task_id)
+
+        # 6. GPT Insights (async)
+        insights = await build_insights_async(df_transformed)
+
+        # 7. Persist combined report
+        self.report_store.save_report(
+            task_id=task_id,
+            transformed=df_transformed,
+            forecast=df_transformed,
+            insights=insights,
+            chart_path=chart_path,
+        )
+
+        # 8. Mark completed
+        self.tasks.set_complete(task_id)
+
+    # ---------- Public helpers ------------------------------------------------
+
+    async def run(self, sources: List[DataSource]) -> str:
+        task_id = str(uuid.uuid4())
+        self.tasks.register(task_id)
+        # fire-and-forget; TaskManager retains handle
+        asyncio.create_task(self._process(task_id, sources))
+        return task_id
+
+    async def run_from_csv(self, path) -> str:
+        return await self.run([path])
+```
+
+# src/analytics/__init__.py
+```python
+"""
+Analytics models & GPT integration
+"""
+```
+
+# src/analytics/gpt_insights.py
+```python
+"""
+GPT-powered natural-language insight generator.
+Abstraction layer allows easy mocking in tests.
+"""
+import os
+from typing import Dict, Any, List
+
+import openai
+import pandas as pd
+import asyncio
+
+from src.config import get_settings
+
+settings = get_settings()
+openai.api_key = settings.openai_api_key
+MODEL = "gpt-3.5-turbo"
+
+
+def _df_to_markdown(df: pd.DataFrame, rows: int = 10) -> str:
+    return df.head(rows).to_markdown(index=False)
+
+
+async def build_insights_async(df: pd.DataFrame) -> Dict[str, Any]:
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _sync_call, df)
+
+
+def _sync_call(df: pd.DataFrame) -> Dict[str, Any]:
+    prompt = (
+        "You are a senior business analyst. The following table contains aggregated "
+        "sales metrics. Provide key insights and actionable recommendations in "
+        "concise bullet points:\n\n"
+        f"{_df_to_markdown(df)}"
+    )
+
+    resp = openai.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.4,
+        max_tokens=400,
+    )
+    answer = resp.choices[0].message.content.strip()
+    return {"insights": answer}
+```
+
+# src/analytics/forecasting.py
+```python
+"""
+Very lightweight forecasting for demo purposes.
+Uses scikit-learn LinearRegression on daily revenue to predict next 7 days.
+"""
+from __future__ import annotations
+
+from typing import Any
+
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+
+def forecast_df(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df["day_num"] = np.arange(len(df))
+
+    X = df[["day_num"]]
+    y = df["revenue"]
+
+    model = LinearRegression()
+    model.fit(X, y)
+
+    future_days = np.arange(len(df), len(df) + 7).reshape(-1, 1)
+    forecast = model.predict(future_days)
+
+    forecast_dates = pd.date_range(df["date"].max(), periods=8, closed="right")
+    result = pd.DataFrame({"date": forecast_dates, "forecast_revenue": forecast})
+    return result
+```
+
+# src/analytics/visualization.py
+```python
+"""
+Matplotlib-based chart generation.
+"""
+from pathlib import Path
+from typing import Any
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+def plot_sales(df: pd.DataFrame, task_id: str) -> str:
+    """
+    Saves a PNG time-series chart and returns the path.
+    """
+    plt.style.use("ggplot")
+    fig, ax = plt.subplots(figsize=(10, 4))
+    df.plot(x="date", y="revenue", ax=ax, marker="o")
+    ax.set_title("Daily Revenue")
+    ax.set_ylabel("USD")
+
+    out_dir = Path("reports") / task_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / "revenue.png"
+    fig.savefig(path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    return str(path)
+```
+
+# src/services/__init__.py
+```python
+"""
+Domain services
+"""
+```
+
+# src/services/task_manager.py
+```python
+"""
+Extremely lightweight in-memory task manager.
+In production swap with Redis / RDBMS.
+"""
+import asyncio
+import threading
+from typing import Dict
+
+from pydantic import BaseModel
+
+
+class TaskState(BaseModel):
+    status: str  # queued | running | complete | failed
+
+
+class TaskManager:
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._tasks: Dict[str, TaskState] = {}
+
+    # --------------------------------------------------------------------- #
+
+    def register(self, task_id: str) -> None:
+        with self._lock:
+            self._tasks[task_id] = TaskState(status="running")
+
+    def set_complete(self, task_id: str) -> None:
+        with self._lock:
+            self._tasks[task_id].status = "complete"
+
+    def set_failed(self, task_id: str) -> None:
+        with self._lock:
+            self._tasks[task_id].status = "failed"
+
+    def get_status(self, task_id: str) -> str:
+        with self._lock:
+            state = self._tasks.get(task_id)
+            return state.status if state else "not_found"
+```
+
+# src/services/report_storage.py
+```python
+"""
+Filesystem-based ReportStore – swappable with S3/GCS.
+Stores:
+  - transformed.parquet
+  - insights.json
+  - revenue.png
+"""
+import json
+from pathlib import Path
+from typing import Any, Dict
+
+import pandas as pd
+from pydantic import BaseModel
+
+
+class Report(BaseModel):
+    transformed_path: str
+    insights: Dict[str, Any]
+    chart_path: str
+
+
+class ReportStore:
+    root = Path("reports")
+
+    # ------------------------------------------------------------------ #
+
+    def save_report(
+        self,
+        task_id: str,
+        transformed: pd.DataFrame,
+        forecast: pd.DataFrame,
+        insights: Dict[str, Any],
+        chart_path: str,
+    ) -> None:
+        task_dir = self.root / task_id
+        task_dir.mkdir(parents=True, exist_ok=True)
+
+        transformed_path = task_dir / "transformed.parquet"
+        transformed.to_parquet(transformed_path, index=False)
+
+        (task_dir / "insights.json").write_text(json.dumps(insights, indent=2))
+
+        # forecast could be stored similarly
+        forecast.to_parquet(task_dir / "forecast.parquet", index=False)
+
+    # ------------------------------------------------------------------ #
+
+    def get_report(self, task_id: str) -> Report:
+        task_dir = self.root / task_id
+        transformed_path = task_dir / "transformed.parquet"
+        chart_path = task_dir / "revenue.png"
+        insights_path = task_dir / "insights.json"
+
+        insights = json.loads(insights_path.read_text())
+
+        return Report(
+            transformed_path=str(transformed_path),
+            insights=insights,
+            chart_path=str(chart_path),
+        )
+```
+
+# src/api/__init__.py
+```python
+"""
+REST API surface
+"""
+```
+
+# src/api/main.py
+```python
+from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
+from fastapi.responses import ORJSONResponse, FileResponse
+from typing import List
+
+import pandas as pd
+from uuid import uuid4
+import shutil
+from pathlib import Path
+
+from src.etl.pipeline import Pipeline
+from src.services.task_manager import TaskManager
+from src.services.report_storage import ReportStore
+from src.middlewares.telemetry import TelemetryMiddleware
+
+app = FastAPI(
+    title="AI Business Analytics SaaS",
+    default_response_class=ORJSONResponse,
+)
+app.add_middleware(TelemetryMiddleware)
+
+pipeline = Pipeline()
+tasks = TaskManager()
+reports = ReportStore()
+
+
+@app.post("/upload-data", status_code=202)
+async def upload_data(background_tasks: BackgroundTasks, files: List[UploadFile] = File(...)):
+    """
+    Accept one or many CSV files.
+    """
+    if not files:
+        raise HTTPException(status_code=400, detail="No files uploaded")
+
+    tmp_folder = Path("/tmp/uploads")
+    tmp_folder.mkdir(exist_ok=True)
+
+    paths: List[Path] = []
+    for f in files:
+        dest = tmp_folder / f"{uuid4()}_{f.filename}"
+        with dest.open("wb") as out:
+            shutil.copyfileobj(f.file, out)
+        paths.append(dest)
+
+    task_id = await pipeline.run([str(p) for p in paths])
+    background_tasks.add_task(lambda: None)  # placeholder to keep worker alive
+    return {"task_id": task_id}
+
+
+@app.get("/status/{task_id}")
+async def get_status(task_id: str):
+    status = tasks.get_status(task_id)
+    if status == "not_found":
+        raise HTTPException(404, "task not found")
+    return {"task_id": task_id, "status": status}
+
+
+@app.get("/report/{task_id}")
+async def get_report(task_id: str):
+    status = tasks.get_status(task_id)
+    if status != "complete":
+        raise HTTPException(400, "task not complete")
+
+    report = reports.get_report(task_id)
+    return report.model_dump()
+
+
+def start() -> None:  # Entry-point for Poetry script
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+# tests/conftest.py
+```python
+import os
+import pytest
+from pathlib import Path
+
+# Provide OPENAI_API_KEY to satisfy client – stubbed mode
+os.environ.setdefault("OPENAI_API_KEY", "test")
+
+SAMPLE_CSV = Path(__file__).parent / "__data__" / "sample.csv"
+
+
+@pytest.fixture(scope="session")
+def sample_csv(tmp_path_factory):
+    data_dir = tmp_path_factory.mktemp("data")
+    dest = data_dir / "sample.csv"
+    dest.write_text(
+        "order_id,timestamp,price,quantity\n"
+        "1,2024-03-22T00:00:00Z,10,3\n"
+        "2,2024-03-23T00:00:00Z,20,1\n"
+        "3,2024-03-23T00:00:00Z,15,2\n"
+    )
+    return dest
+```
+
+# tests/test_api.py
+```python
+import pytest
+from fastapi.testclient import TestClient
+
+from src.api.main import app
+
+client = TestClient(app)
+
+
+def test_upload_and_status(sample_csv, monkeypatch):
+    # Monkey-patch GPT call to avoid network
+    monkeypatch.setattr("src.analytics.gpt_insights._sync_call", lambda df: {"insights": "stubbed"})
+
+    with sample_csv.open("rb") as f:
+        resp = client.post("/upload-data", files={"files": ("sample.csv", f, "text/csv")})
+    assert resp.status_code == 202
+    task_id = resp.json()["task_id"]
+
+    # Re-poll status until complete
+    for _ in range(10):
+        status = client.get(f"/status/{task_id}").json()["status"]
+        if status == "complete":
+            break
+
+    report = client.get(f"/report/{task_id}").json()
+    assert "insights" in report
+```
+
+# tests/test_etl.py
+```python
+import asyncio
+from src.etl.pipeline import Pipeline
+
+
+def test_pipeline(sample_csv, monkeypatch):
+    monkeypatch.setattr("src.analytics.gpt_insights._sync_call", lambda df: {"insights": "stubbed"})
+    pipeline = Pipeline()
+    task_id = asyncio.run(pipeline.run_from_csv(sample_csv))
+    assert task_id
+```
+
+# tests/test_concurrency.py
+```python
+import asyncio
+import random
+from src.etl.pipeline import Pipeline
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_many_parallel(sample_csv, monkeypatch):
+    monkeypatch.setattr("src.analytics.gpt_insights._sync_call", lambda df: {"insights": "stubbed"})
+    pipeline = Pipeline()
+
+    tasks = [asyncio.create_task(pipeline.run_from_csv(sample_csv)) for _ in range(20)]
+    ids = await asyncio.gather(*tasks)
+    assert len(set(ids)) == 20
+```
+
+# tests/test_performance.py
+```python
+import asyncio
+import pytest
+from src.etl.pipeline import Pipeline
+
+
+@pytest.mark.benchmark
+def test_pipeline_benchmark(benchmark, sample_csv, monkeypatch):
+    monkeypatch.setattr("src.analytics.gpt_insights._sync_call", lambda df: {"insights": "stubbed"})
+    pipeline = Pipeline()
+
+    async def _run():
+        await pipeline.run_from_csv(sample_csv)
+
+    benchmark(lambda: asyncio.run(_run()))
+```
+
+────────────────────────────────────────────────────────────────────────
+

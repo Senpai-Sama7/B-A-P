@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ai-analytics.fullname" . }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ include "ai-analytics.fullname" . }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8000
