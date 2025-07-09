@@ -1,3 +1,9 @@
+
+<p align="center">
+  <img src="assets/logo.png" alt="JobFit AI" width="300"/>
+</p>
+---
+
 # 🚀 AI Analytics Platform
 
 > **Enterprise-Ready, AI-Powered Business Analytics SaaS**
