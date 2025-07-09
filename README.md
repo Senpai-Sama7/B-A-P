@@ -6,7 +6,7 @@
 #                                                                    "Business Analytics Platorm" 
 ---
 
-# 🚀 AI Analytics Platform
+# 🚀 "Your business data but made smart and easy to read"
 
 > **Enterprise-Ready, AI-Powered Business Analytics SaaS**
 
