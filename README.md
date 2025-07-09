@@ -3,6 +3,7 @@
   <img src="assets/logo.png" alt="B-A-P" width="300"/>
 </p>
 
+#                                                                    "Business Analytics Platorm" 
 ---
 
 # 🚀 AI Analytics Platform
