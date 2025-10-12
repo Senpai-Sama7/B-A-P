@@ -3,22 +3,98 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Environment
+# Virtual Environments
 .env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 .env.*
 
-# VSCode
-.vscode/
+# Poetry
+poetry.lock.bak
 
-# Docker
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Testing
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# Logs
 *.log
 logs/
+*.log.*
 
-# Test
-.coverage
-htmlcov/
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Docker
+docker-compose.override.yml
+
+# Secrets and credentials
+secrets/
+*.pem
+*.key
+*.crt
+.secret
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# Build artifacts
+*.whl
+*.tar.gz
+
+# Documentation
+docs/_build/
+
+# Local configuration
+local_settings.py
+config.local.yml
