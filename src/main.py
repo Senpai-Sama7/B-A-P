@@ -3,6 +3,7 @@ Main entrypoint for the AI Analytics Platform FastAPI app.
 """
 import os
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response, BackgroundTasks, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -15,8 +16,8 @@ from src.api.routes.analytics import router as analytics_router
 from src.api.routes.data import router as data_router
 from src.api.routes.pipeline import router as pipeline_router
 from src.api.middleware.auth import AuthenticationMiddleware
-from src.core.database import DatabaseManager
-from src.core.cache import CacheManager
+from src.core.database import db_manager
+from src.core.cache import cache_manager
 from src.utils.logger import setup_logging
 from src.utils.metrics import REQUESTS, LATENCY
 from src.api.exception_handlers import app_exception_handler, generic_exception_handler, AppException
@@ -25,11 +26,46 @@ settings = get_settings()
 setup_logging(settings.LOG_LEVEL)
 logger = get_logger()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle startup and shutdown events."""
+    # Startup
+    logger.info("Starting up AI Analytics Platform...")
+    try:
+        # Initialize database
+        await db_manager.create_tables()
+        logger.info("Database initialized")
+        
+        # Initialize cache
+        await cache_manager.connect()
+        logger.info("Cache connected")
+        
+        logger.info("AI Analytics Platform started successfully")
+    except Exception as e:
+        logger.error(f"Failed to start application: {e}")
+        raise
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down AI Analytics Platform...")
+    try:
+        await cache_manager.close()
+        logger.info("Cache disconnected")
+        
+        await db_manager.close()
+        logger.info("Database disconnected")
+        
+        logger.info("AI Analytics Platform shut down successfully")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}")
+
 app = FastAPI(
     title="AI Analytics Platform",
     version="1.0.0",
     default_response_class=ORJSONResponse,
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 # Middlewares
@@ -38,25 +74,39 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.ALLOWED_ORIGINS, allow
 app.add_middleware(AuthenticationMiddleware)
 
 # Routers
-app.include_router(analytics_router, prefix="/api/analytics")
-app.include_router(data_router, prefix="/api/data")
-app.include_router(pipeline_router, prefix="/api/pipeline")
+app.include_router(analytics_router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(data_router, prefix="/api/data", tags=["Data"])
+app.include_router(pipeline_router, prefix="/api/pipeline", tags=["Pipeline"])
 
 # Register global exception handlers
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
 # Health, readiness, and metrics endpoints
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 async def health():
+    """Health check endpoint."""
     return {"status": "healthy"}
 
-@app.get("/ready")
+@app.get("/ready", tags=["Health"])
 async def ready():
-    return {"status": "ready"}
+    """Readiness check endpoint."""
+    try:
+        # Check database connection
+        async with db_manager.session() as session:
+            await session.execute("SELECT 1")
+        
+        # Check cache connection
+        await cache_manager.exists("health-check")
+        
+        return {"status": "ready", "database": "connected", "cache": "connected"}
+    except Exception as e:
+        logger.error(f"Readiness check failed: {e}")
+        raise HTTPException(status_code=503, detail="Service not ready")
 
-@app.get("/metrics")
+@app.get("/metrics", tags=["Health"])
 async def metrics():
+    """Prometheus metrics endpoint."""
     return Response(generate_latest(), media_type="text/plain")
 
 if __name__ == "__main__":

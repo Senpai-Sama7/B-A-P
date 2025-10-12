@@ -1,7 +1,7 @@
 import asyncio
-from ai_analytics_platform.src.models.analytics_models import PipelineRequest
-from ai_analytics_platform.src.ai.gpt_client import generate_text
-from ai_analytics_platform.src.utils.logger import get_logger
+from src.models.analytics_models import PipelineRequest
+from src.ai.gpt_client import generate_text
+from src.utils.logger import get_logger
 from typing import Any
 
 logger = get_logger()
@@ -11,7 +11,7 @@ async def generate_insights(dataset_id: str, user: str) -> None:
     try:
         await asyncio.sleep(0.1)  # Simulate I/O
         prompt = f"Generate business insights for dataset {dataset_id}."
-        insights = generate_text(prompt)
+        insights = await generate_text(prompt)
         logger.info(f"Insights for {dataset_id} by {user}: {insights}")
         # TODO: Store insights in DB or cache as needed
     except Exception as e:

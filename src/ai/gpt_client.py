@@ -1,15 +1,31 @@
-import os
-import openai
-from typing import Any
+"""
+OpenAI GPT client for AI-powered features.
+"""
+from openai import AsyncOpenAI
+from typing import Optional
+from src.config import get_settings
 
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]  # Fail fast if missing
-openai.api_key = OPENAI_API_KEY
+settings = get_settings()
 
-def generate_text(prompt: str, model: str = "gpt-4", max_tokens: int = 256) -> str:
-    """Generate text using OpenAI's GPT model."""
-    response: Any = openai.ChatCompletion.create(
+# Initialize async OpenAI client
+client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+
+async def generate_text(
+    prompt: str,
+    model: Optional[str] = None,
+    max_tokens: Optional[int] = None,
+    temperature: Optional[float] = None
+) -> str:
+    """Generate text using OpenAI's GPT model asynchronously."""
+    model = model or settings.OPENAI_MODEL
+    max_tokens = max_tokens or settings.MAX_TOKENS
+    temperature = temperature or settings.TEMPERATURE
+    
+    response = await client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
         max_tokens=max_tokens,
+        temperature=temperature,
     )
+    
     return response.choices[0].message.content.strip()
