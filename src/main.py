@@ -16,6 +16,8 @@ from src.api.routes.analytics import router as analytics_router
 from src.api.routes.data import router as data_router
 from src.api.routes.pipeline import router as pipeline_router
 from src.api.middleware.auth import AuthenticationMiddleware
+from src.api.middleware.rate_limit import RateLimitMiddleware
+from src.api.middleware.security import SecurityHeadersMiddleware
 from src.core.database import db_manager
 from src.core.cache import cache_manager
 from src.utils.logger import setup_logging
@@ -63,14 +65,25 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AI Analytics Platform",
     version="1.0.0",
+    description="Enterprise-grade, AI-powered business analytics platform",
     default_response_class=ORJSONResponse,
     openapi_url="/openapi.json",
     lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
-# Middlewares
+# Middlewares (order matters - first added is outermost)
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
-app.add_middleware(CORSMiddleware, allow_origins=settings.ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.add_middleware(AuthenticationMiddleware)
 
 # Routers
@@ -86,7 +99,7 @@ app.add_exception_handler(Exception, generic_exception_handler)
 @app.get("/health", tags=["Health"])
 async def health():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    return {"status": "healthy", "timestamp": "now"}
 
 @app.get("/ready", tags=["Health"])
 async def ready():
@@ -109,5 +122,23 @@ async def metrics():
     """Prometheus metrics endpoint."""
     return Response(generate_latest(), media_type="text/plain")
 
+@app.get("/", tags=["Root"])
+async def root():
+    """Root endpoint with API information."""
+    return {
+        "name": "AI Analytics Platform",
+        "version": "1.0.0",
+        "description": "Enterprise-grade, AI-powered business analytics platform",
+        "docs": "/docs",
+        "redoc": "/redoc",
+        "health": "/health",
+    }
+
 if __name__ == "__main__":
-    uvicorn.run("src.main:app", host=settings.HOST, port=settings.PORT, reload=settings.DEBUG)
+    uvicorn.run(
+        "src.main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+        log_level=settings.LOG_LEVEL.lower(),
+    )
