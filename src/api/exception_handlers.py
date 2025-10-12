@@ -1,6 +1,6 @@
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
-from ai_analytics_platform.src.utils.logger import get_logger
+from src.utils.logger import get_logger
 import traceback
 
 logger = get_logger()
