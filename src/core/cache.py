@@ -15,8 +15,8 @@ class CacheManager:
         self.redis: Optional[aioredis.Redis] = None
         self.url = settings.REDIS_URL
     
-    async def connect(self):
-        """Connect to Redis."""
+    async def connect(self) -> "CacheManager":
+        """Connect to Redis and return the cache manager instance."""
         if not self.redis:
             self.redis = await aioredis.from_url(
                 self.url,
@@ -24,6 +24,7 @@ class CacheManager:
                 decode_responses=True,
                 max_connections=20,
             )
+        return self
     
     async def close(self):
         """Close Redis connection."""
