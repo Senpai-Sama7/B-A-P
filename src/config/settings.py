@@ -2,24 +2,22 @@
 Runtime configuration (12-factor; env-driven). Single source-of-truth for every
 micro-service inside the mono-repo.
 """
+
 from functools import lru_cache
 from pathlib import Path
 from typing import List
-import os
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
 
 _ROOT = Path(__file__).resolve().parents[2]  # repo root
 
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
-    
+
     # --- FastAPI ---
     APP_NAME: str = "AI-Analytics Platform"
     DEBUG: bool = Field(default=False)
@@ -64,13 +62,14 @@ class Settings(BaseSettings):
         if not v.startswith("postgresql"):
             raise ValueError("DATABASE_URL must be a Postgres URL")
         return v
-    
+
     @field_validator("REDIS_URL")
     @classmethod
     def validate_redis_url(cls, v: str) -> str:
         if not v.startswith("redis://"):
             raise ValueError("REDIS_URL must start with redis://")
         return v
+
 
 @lru_cache
 def get_settings() -> Settings:

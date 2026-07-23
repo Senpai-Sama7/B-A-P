@@ -1,11 +1,13 @@
 """
 Security utilities for password hashing and JWT token management.
 """
-import os
-from passlib.context import CryptContext
-from jose import jwt, JWTError
+
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional, cast
+
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
 from src.config import get_settings
 
 settings = get_settings()
@@ -16,13 +18,16 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.JWT_EXPIRE_MINUTES
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hashed password."""
-    return pwd_context.verify(plain_password, hashed_password)
+    return cast(bool, pwd_context.verify(plain_password, hashed_password))
+
 
 def get_password_hash(password: str) -> str:
     """Hash a password for secure storage."""
-    return pwd_context.hash(password)
+    return cast(str, pwd_context.hash(password))
+
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token with an expiration."""
@@ -32,13 +37,13 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     else:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
 
 def verify_token(token: str) -> Optional[str]:
     """Verify a JWT token and return the subject if valid, else None."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload.get("sub")
+        return cast(Optional[str], payload.get("sub"))
     except JWTError:
         return None

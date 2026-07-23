@@ -34,13 +34,8 @@ Run the app in dev mode: `poetry run uvicorn src.main:app --reload --host 0.0.0.
 - Tests use an in-memory SQLite DB (via `aiosqlite`) for the ORM, but several tests
   (`test_etl.py`, `test_concurrency.py`) require a live Redis at `localhost:6379`.
 - Known pre-existing failures unrelated to environment setup (do NOT treat as env breakage):
-  - `test_analytics_forecast` needs a real `OPENAI_API_KEY`; with the placeholder key it returns 500
-    (OpenAI 401). Set the `OPENAI_API_KEY` secret to exercise AI/forecast features.
-  - `test_password_hashing` / `test_password_hash_uniqueness` fail because `passlib 1.7.4` is
-    incompatible with the resolved `bcrypt 5.x`.
-  - `test_concurrent_data_transformations` fails on a `KeyError` in the ETL code.
-  - `GET /ready` returns 503 because the code passes a raw `"SELECT 1"` string to `session.execute`
-    (SQLAlchemy 2.0 requires `text(...)`).
+  - `GET /ready` returns 503 if the code passes a raw `"SELECT 1"` string to `session.execute`
+    (SQLAlchemy 2.0 requires `text(...)`). This is fixed in the codebase on branches with CI fixes.
 - The `SecurityHeadersMiddleware` CSP blocks the CDN-hosted Swagger UI assets, so `/docs` renders
   blank in a browser out of the box (the API and `/openapi.json` still work fine via curl). Loading
   `/docs` in a browser requires allowing `https://cdn.jsdelivr.net` in the CSP.

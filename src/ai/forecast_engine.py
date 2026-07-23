@@ -5,6 +5,7 @@ from src.utils.logger import get_logger
 
 logger = get_logger()
 
+
 async def generate_forecast(request: ForecastRequest) -> ForecastResponse:
     """Generate a forecast asynchronously using GPT."""
     try:
