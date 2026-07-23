@@ -5,7 +5,8 @@ Security utilities for password hashing and JWT token management.
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, cast
 
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import PyJWTError
 from passlib.context import CryptContext
 
 from src.config import get_settings
@@ -37,13 +38,14 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     else:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return cast(str, jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM))
 
 
 def verify_token(token: str) -> Optional[str]:
     """Verify a JWT token and return the subject if valid, else None."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return cast(Optional[str], payload.get("sub"))
-    except JWTError:
+        sub = payload.get("sub")
+        return str(sub) if sub is not None else None
+    except PyJWTError:
         return None
