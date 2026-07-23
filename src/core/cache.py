@@ -1,83 +1,92 @@
 """
 Async Redis cache connection and management.
 """
-import redis.asyncio as aioredis
-from typing import Optional, Any
+
 import json
+from typing import Any, Optional, cast
+
+import redis.asyncio as aioredis
+
 from src.config import get_settings
 
 settings = get_settings()
 
+
 class CacheManager:
     """Redis cache manager for handling connections and operations."""
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.redis: Optional[aioredis.Redis] = None
         self.url = settings.REDIS_URL
-    
+
     async def connect(self) -> "CacheManager":
         """Connect to Redis and return the cache manager instance."""
         if not self.redis:
             try:
-                self.redis = await aioredis.from_url(
-                    self.url,
-                    encoding="utf-8",
-                    decode_responses=True,
-                    max_connections=20,
+                self.redis = cast(
+                    aioredis.Redis,
+                    await aioredis.from_url(  # type: ignore[no-untyped-call]
+                        self.url,
+                        encoding="utf-8",
+                        decode_responses=True,
+                        max_connections=20,
+                    ),
                 )
             except Exception as e:
-                # Log the error or handle it appropriately
                 raise ConnectionError(f"Failed to connect to Redis: {e}") from e
         return self
-    
-    async def close(self):
+
+    async def close(self) -> None:
         """Close Redis connection."""
         if self.redis:
             await self.redis.close()
             self.redis = None
-    
-    async def get(self, key: str) -> Optional[Any]:
-        """Get a value from cache."""
+
+    async def _client(self) -> aioredis.Redis:
+        """Return an active Redis client, connecting if needed."""
         if not self.redis:
             await self.connect()
-        value = await self.redis.get(key)
+        assert self.redis is not None
+        return self.redis
+
+    async def get(self, key: str) -> Optional[Any]:
+        """Get a value from cache."""
+        redis = await self._client()
+        value = await redis.get(key)
         if value:
             try:
                 return json.loads(value)
             except json.JSONDecodeError:
                 return value
         return None
-    
+
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """Set a value in cache with optional TTL."""
-        if not self.redis:
-            await self.connect()
-        if not isinstance(value, str):
-            value = json.dumps(value)
+        redis = await self._client()
+        stored_value = value if isinstance(value, str) else json.dumps(value)
         if ttl:
-            return await self.redis.setex(key, ttl, value)
-        return await self.redis.set(key, value)
-    
+            return bool(await redis.setex(key, ttl, stored_value))
+        return bool(await redis.set(key, stored_value))
+
     async def delete(self, key: str) -> int:
         """Delete a key from cache."""
-        if not self.redis:
-            await self.connect()
-        return await self.redis.delete(key)
-    
+        redis = await self._client()
+        return int(await redis.delete(key))
+
     async def exists(self, key: str) -> bool:
         """Check if a key exists in cache."""
-        if not self.redis:
-            await self.connect()
-        return await self.redis.exists(key) > 0
-    
+        redis = await self._client()
+        return bool(await redis.exists(key) > 0)
+
     async def clear(self) -> bool:
         """Clear all keys from cache."""
-        if not self.redis:
-            await self.connect()
-        return await self.redis.flushdb()
+        redis = await self._client()
+        return bool(await redis.flushdb())
+
 
 # Global cache manager instance
 cache_manager = CacheManager()
+
 
 async def get_redis() -> CacheManager:
     """Dependency for getting Redis cache in FastAPI."""

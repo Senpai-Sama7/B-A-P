@@ -1,10 +1,9 @@
 import asyncio
-from src.models.analytics_models import PipelineRequest
 from src.ai.gpt_client import generate_text
 from src.utils.logger import get_logger
-from typing import Any
 
 logger = get_logger()
+
 
 async def generate_insights(dataset_id: str, user: str) -> None:
     """Generate business insights for a dataset asynchronously."""

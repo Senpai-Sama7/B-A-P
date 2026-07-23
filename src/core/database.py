@@ -1,9 +1,9 @@
 """
 Async database connection and session management using SQLAlchemy.
 """
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.pool import NullPool
+from sqlalchemy.orm import DeclarativeBase
 from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -29,30 +29,33 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
+
 # Base class for ORM models
-Base = declarative_base()
+class Base(DeclarativeBase):
+    """SQLAlchemy declarative base for ORM models."""
+
 
 class DatabaseManager:
     """Database manager for handling connections and sessions."""
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.engine = engine
         self.session_factory = AsyncSessionLocal
-    
-    async def create_tables(self):
+
+    async def create_tables(self) -> None:
         """Create all database tables."""
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-    
-    async def drop_tables(self):
+
+    async def drop_tables(self) -> None:
         """Drop all database tables."""
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
-    
-    async def close(self):
+
+    async def close(self) -> None:
         """Close database connections."""
         await self.engine.dispose()
-    
+
     @asynccontextmanager
     async def session(self) -> AsyncGenerator[AsyncSession, None]:
         """Create a new database session context."""
@@ -66,6 +69,7 @@ class DatabaseManager:
             finally:
                 await session.close()
 
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for getting database sessions in FastAPI."""
     async with AsyncSessionLocal() as session:
@@ -77,6 +81,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
 
 # Global database manager instance
 db_manager = DatabaseManager()
